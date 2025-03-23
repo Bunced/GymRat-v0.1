@@ -26,12 +26,39 @@ def main():
         case "1":
             new_workout()
 
+
+
+
 def new_workout():
     
-    days_per_week=input("Which days per week would you like to train?")
-        while True:
-            print("Please enter the days per week you would like to train, enter the letter C when done")
-            day_selection=input("")
+    mins_per_workout= 0
+    
+    DOTW = {
+        "Monday":False,
+        "Tuesday":False,
+        "Wednesday":False,
+        "Thursday":False,
+        "Friday":False,
+        "Saturday":False,
+        "Sunday":False,
+    }
+
+     print("Workouts are best between 30 minutes and 2 hours! Any less and its hard to get enough volume of training to make gains, any higher and most people are too tired by the end for any of the last excersizes to count. If you're unsure where to start, try 1 hour and see how it goes :)")
+
+    while True:
+        mins_per_workout=input("How many minutes would you like your workouts to be? (30-120) ")
+            if not isinstance(mins_per_workout,int):
+                print("Error, Please only enter a number")
+            
+            if mins_per_workout < 15:
+                print("")
+
+
+    for day in DOTW:
+        if(input(f"\nWould you like to work out on "+ day+"?")).lower()[0]=='y':
+            DOTW[day]= True
+            print(day+" Has been added as a workout day!")
+                
 
 main()
 
