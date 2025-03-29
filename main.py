@@ -1,5 +1,6 @@
 import shutil
 
+POSITVE_INDICATORS=["yes","y","yeah","ye","yep","confirm",]
 
 def main():
     #Find the character width of CLI so that title banner is correct size
@@ -30,11 +31,87 @@ def main():
 
 
 def new_workout():
+
+    #loops until confirmed
+    while True:
+        availability_ingest  = collect_availability()
+        dotw= availability_ingest[0]     #a dictionary with keys monday-friday with true or false as values
+        mins_per_workout=availability_ingest[1]
+        days_per_week = availability_ingest[2]
+
+        working_days = " ,".join([day for day, value in dotw.items() if value])
+       
+        
+        if input("So you want to work out on "+working_days + " for "+str(mins_per_workout)+ "minutes? [Y/N]").lower() in POSITVE_INDICATORS:
+            break
+            
+    #Splits
+    # this section should end up with a 
+    #Full body is always an option
+    # Upper/ lower needs 2 days, and will always be allowed 
+    week_arr=list(dotw.values())
+    PPL = True if days_per_week > 3 else False
+
+    #When only 1 day per week, in order to have full body frequency we need to be upper body
+    if days_per_week == 1:
+        for key,value in dotw.items(): 
+            if value == True:
+                dotw[key]=1
+    #2 sequential days alwasy result in upper lower split.
+    elif check_sequential_upper_lower(dotw,week_arr):
+        for day,split in dotw.items():
+            if day:
+                dotw[day]="Upper Lower"
+    # All other cases covered by cursed as fuck algorithm 
+    else:
+        #this fucked up recursive algorithm for algorithm design
+        calcsplit(dotw,1,days_per_week,0,True,PPL)
+
+#Special case split where two sequential days, will always be upper/lower
+def check_sequential_upper_lower(week, days_per_week):
+    if days_per_week != 2:
+        return False
+    
+    for day in range(len(week)-1):
+        if week[day]:
+            if week[day+1]:
+                return True
+            else:
+                return False
+    return False
+
+#this should spit out an array of potential weeks (also arrays) to be evaluated    
+def calcsplit(week,position,days_per_week,days_so_far,upper_lower,PPL):
+
+    yesterday= position-1
+    today=1
+    tomorrow= 0 if position+1==6 else position+1 #we do this so that we do not get index out of bounds error, and the last day of the week refers to the first day of the next week for tomorrow.
+
+    if week[today]==False:
+            return calcsplit(week,position+1,days_per_week,days_so_far,upper_lower,PPL)
+    
+    if 
+    
+        
+    
+
+
+    
+
+    
+
+############################################################################################################################################################################################
+# Returns an array
+       #return[0] = DOTW dictionary
+       #return[1] = minutes/workout
+       #return[2] = days per week working out
+def collect_availability():
     #Constrains workout times
     MIN_MINUTES =15
     MAX_COMFY_MINUTES = 120 #user will get an warning if exceeding this
     MAX_MINUTES = 180
     mins_per_workout= 0
+    days_per_week = 0
     
     
     
@@ -81,11 +158,20 @@ def new_workout():
         break
         
     print("Fantastic, " +str(mins_per_workout)+" minutes it is!")
-    for day in DOTW:
-        if(input(f"\nWould you like to work out on "+ day+"?")).lower()[0]=='y':
-            DOTW[day]= True 
-            print(day+" Has been added as a workout day!")
-                
+    while True:
+        for day in DOTW:
+            if(input(f"\nWould you like to work out on "+ day+"?")).lower()[0]=='y':
+                DOTW[day]= True 
+                print(day+" Has been added as a workout day!")
+                days_per_week+=1
+        
+        if days_per_week==0: #Catching case where they say no to every day
+            print("Error, you must work out for at least one day")
+        else:
+            break
+
+
+    return [DOTW,mins_per_workout,days_per_week]
 
 main()
 
