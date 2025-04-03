@@ -83,9 +83,17 @@ def new_workout():
             print("Sunday: " + str(split[6]))
 
         count+=1
+    splitgrader(splits_arr)
 
 
 
+######################################################################################                                                                             
+# ,-----.   ,---.   ,--.     ,-----.  ,---.   ,------.  ,--.    ,--. ,--------.     #
+#'  .--./  /  O  \  |  |    '  .--./ '   .-'  |  .--. ' |  |    |  | '--.  .--'     # 
+#|  |     |  .-.  | |  |    |  |     `.  `-.  |  '--' | |  |    |  |    |  |        # 
+#'  '--'\ |  | |  | |  '--. '  '--'\ .-'    | |  | --'  |  '--. |  |    |  |        #
+# `-----' `--' `--' `-----'  `-----' `-----'  `--'      `-----' `--'    `--'        #
+######################################################################################                                                                                    
 
 ############################################################################################################################################################################################################################
 #this should spit out an array of potential weeks (also arrays) to be evaluated    
@@ -111,7 +119,7 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
     else: #True from here on out
         #Not training today or tomorrow = anything
         match week[yesterday]:
-            case False: #No training yesterday, today could be anything
+            case False|True: #No training yesterday, today could be anything
                 
                 #Upper/lower will always been an option
                 new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
@@ -187,14 +195,73 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
                 new_week=week.copy()
                 new_week[today]="lower"
                 calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                
             case "full":
                 print("You fucked up, I found yesterday as 'full' fucking idiot")
             
             case _:
                 print("Error, default case reached in calcsplit, yesterday was"+str(week[yesterday]))
-                
+#############################################################################################################################################################################################
+#  ________     _______    ___         __      ___________        _______     _______         __       ________     _______    _______   
+# /"       )   |   __ "\  |"  |       |" \    ("     _   ")      /" _   "|   /"      \       /""\     |"      "\   /"     "|  /"      \  
+#(:   \___/    (. |__) :) ||  |       ||  |    )__/  \\__/      (: ( \___)  |:        |     /    \    (.  ___  :) (: ______) |:        | 
+# \___  \      |:  ____/  |:  |       |:  |       \\_ /          \/ \       |_____/   )    /' /\  \   |: \   ) ||  \/    |   |_____/   ) 
+#  __/  \\     (|  /       \  |___    |.  |       |.  |          //  \ ___   //      /    //  __'  \  (| (___\ ||  // ___)_   //      /  
+# /" \   :)   /|__/ \     ( \_|:  \   /\  |\      \:  |         (:   _(  _| |:  __   \   /   /  \\  \ |:       :) (:      "| |:  __   \  
+#(_______/   (_______)     \_______) (__\_|_)      \__|          \_______)  |__|  \___) (___/    \___)(________/   \_______) |__|  \___) 
+######################## ###  ############################################################################################################################################################################################                                                                                                                                     
+               
+def splitgrader(splits_arr):
+    best_upper= []
+    best_upper_count= 0
+    best_balanced= []
+    best_balanced_count= 0
+    best_lower = []
+    best_lower_count= 0
+    #purge the terrible splits
+    for split in splits_arr:
+        push=0
+        pull=0
+        lower=0
+        
+      
+        
+        for day in split:
+            if day == 'full':
+                push+=1
+                pull+=1
+                lower+=2
+            elif day=='upper':
+                push+=2
+                pull+=2
+            elif day == 'lower':
+                lower+=4
+            elif day == 'push':
+                push+=4
+            elif day == 'pull':
+                pull+=4
             
+        if push==0 or pull ==0 or lower== 0: #anything with no frequency for a muscle is not gonna fly
+            continue
+                
+        if push+pull > best_upper_count:
+            best_upper = split
+            best_upper_count = push+pull
+        
+        if push+pull+lower > best_balanced_count:
+            best_balanced = split
+            best_balanced = push+pull+lower
+        
+        if lower > best_lower_count:
+            best_lower=split
+            best_lower_count = lower
+            
+    print("The best lower split is "+ str(best_lower))
+    
+    print("The best balanced split is "+ str(best_balanced))
+    
+    print("The best upper split is "+ str(best_upper))
+            
+        
         
 
     
