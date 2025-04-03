@@ -50,52 +50,133 @@ def new_workout():
     #Full body is always an option
     # Upper/ lower needs 2 days, and will always be allowed 
     week_arr=list(dotw.values())
-    PPL = True if days_per_week > 3 else False
-
+    ppl = True if days_per_week > 3 else False
+    splits_arr= []
     #When only 1 day per week, in order to have full body frequency we need to be upper body
     if days_per_week == 1:
         for key,value in dotw.items(): 
             if value == True:
-                dotw[key]=1
-    #2 sequential days alwasy result in upper lower split.
-    elif check_sequential_upper_lower(dotw,week_arr):
-        for day,split in dotw.items():
-            if day:
-                dotw[day]="Upper Lower"
+                dotw[key]='full'
+        splits_arr.append([dotw])
     # All other cases covered by cursed as fuck algorithm 
     else:
         #this fucked up recursive algorithm for algorithm design
-        calcsplit(dotw,1,days_per_week,0,True,PPL)
-
-#Special case split where two sequential days, will always be upper/lower
-def check_sequential_upper_lower(week, days_per_week):
-    if days_per_week != 2:
-        return False
+        
+        splits_arr=calcsplit(splits_arr,week_arr,0,days_per_week,0,ppl)
     
-    for day in range(len(week)-1):
-        if week[day]:
-            if week[day+1]:
-                return True
-            else:
-                return False
-    return False
+    for split in splits_arr:
+        print("Monday:" + str(split[0]))
+        print("Tuesday:" + str(split[1]))
+        print("Wednesday:" + str(split[2]))
+        print("Thursday:" + str(split[3]))
+        print("Friday:" + str(split[4]))
+        print("Saturday:" + str(split[5]))
+        print("Sunday:" + str(split[6]))
 
+
+
+
+############################################################################################################################################################################################################################
 #this should spit out an array of potential weeks (also arrays) to be evaluated    
-def calcsplit(week,position,days_per_week,days_so_far,upper_lower,PPL):
+def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
 
-    yesterday= position-1
-    today=1
+    yesterday= 6 if position-1==-1 else position-1 # we do this to avoid index out of bound from first check
+    today=position
     tomorrow= 0 if position+1==6 else position+1 #we do this so that we do not get index out of bounds error, and the last day of the week refers to the first day of the next week for tomorrow.
 
+
+    #Case where we have completed the amount of days that we are training, cut recursion short
+    if days_per_week == days_so_far:
+        return splits_arr.append(week)
+
+
+
     if week[today]==False:
-            return calcsplit(week,position+1,days_per_week,days_so_far,upper_lower,PPL)
+            return calcsplit(splits_arr,week,position+1,days_per_week,days_so_far,ppl)
     
-    if 
+    
+    
+    else: #True from here on out
+        #Not training today or tomorrow = anything
+        match week[yesterday]:
+            case False: #No training yesterday, today could be anything
+                
+                #Upper/lower will always been an option
+                week[today]="upper"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+                week[today]="lower"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+                
+                #Full body will only be an option if not training tomorrow
+                if week[tomorrow] == False:
+                    
+                    week[today]="full"
+                    splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                    
+                    
+                #ppl is an option if enough days in the week support it
+                if ppl:
+
+                    week[today]="push"
+                    splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                    
+                    week[today]="pull"
+                    splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                    
+            case "upper":
+                
+                #Only lower can occur
+                week[today]="lower"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+            
+            case "lower":
+                #upper, push or pull can occur
+                
+                week[today]="upper"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+                if ppl:
+                    week[today]="push"
+                    splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                        
+                    week[today]="pull"
+                    splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+            
+            case "push":
+                #only pull or lower can occur
+                
+                week[today]="pull"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+                week[today]="lower"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+            case "pull":
+                #only push or lower can occur
+                
+                week[today]="pull"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+                week[today]="lower"
+                splits_arr.extend(calcsplit(splits_arr,week,position+1,days_per_week,days_so_far+1,ppl))
+                
+            case "full":
+                print("You fucked up, I found yesterday as 'full' fucking idiot")
+            
+            case _:
+                print("Error, default case reached in calcsplit, yesterday was"+str(week[yesterday]))
+                
+            
+        return splits_arr
+                
+        
     
         
     
 
-#ladade
+
     
 
     
