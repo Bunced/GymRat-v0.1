@@ -115,14 +115,20 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
         calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far,ppl)
     
     #from here in out its all true working days
-    elif position==6: # we need to handle differently for the last day of the split as to make sure it doesnt interfere 
+    else: 
         upper=True
         lower=True
         full=True
         push=ppl
         pull=ppl
 
-        if week[yesterday]=="upper" or week[tomorrow]=="upper":
+        if week[tomorrow]!= False:
+            full=False
+
+        if week[tomorrow]=="full":
+            return
+
+        if week[yesterday]=="upper" or week[tomorrow]=="upper": # the we check tomorrow as well to catch sunday/monday
             upper=False
             push=False
             pull=False
@@ -140,7 +146,9 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
             upper=False
             pull=False
             full=False
-        
+
+
+    #Below handles recursive calling
         if upper:
             new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
             new_week[today]="upper"
@@ -164,89 +172,7 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
             calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)      
 
 
-    else: #True + during normal week from here on out
-        #Not training today or tomorrow = anything
-        match week[yesterday]:
-            case False|True: #No training yesterday, today could be anything
-                
-                #Upper/lower will always been an option
-                new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
-                new_week[today]="upper"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                
-                new_week=week.copy()
-                new_week[today]="lower"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                
-                
-                #Full body will only be an option if not training tomorrow
-                if week[tomorrow] == False:
-                    
-                    new_week=week.copy()
-                    new_week[today]="full"
-                    calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                    
-                    
-                #ppl is an option if enough days in the week support it
-                if ppl:
-
-                    new_week=week.copy()
-                    new_week[today]="push"
-                    calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                    
-                    new_week=week.copy()
-                    new_week[today]="pull"
-                    calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                    
-            case "upper":
-                
-                #Only lower can occur
-                new_week=week.copy()
-                new_week[today]="lower"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-            
-            case "lower":
-                #upper, push or pull can occur
-                
-                new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
-                new_week[today]="upper"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                
-                if ppl:
-                    new_week=week.copy()
-                    new_week[today]="push"
-                    calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                    
-                    new_week=week.copy()
-                    new_week[today]="pull"
-                    calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-            
-            case "push":
-                #only pull or lower can occur
-                
-                new_week=week.copy()
-                new_week[today]="pull"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                
-                new_week=week.copy()
-                new_week[today]="lower"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-            
-                
-            case "pull":
-                #only push or lower can occur
-                
-                new_week=week.copy()
-                new_week[today]="push"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-                
-                new_week=week.copy()
-                new_week[today]="lower"
-                calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
-            case "full":
-                print("You fucked up, I found yesterday as 'full' fucking idiot")
-            case _:
-                print("Error, default case reached in calcsplit, yesterday was"+str(week[yesterday]))
+    
 #############################################################################################################################################################################################
 #  ________     _______    ___         __      ___________        _______     _______         __       ________     _______    _______   
 # /"       )   |   __ "\  |"  |       |" \    ("     _   ")      /" _   "|   /"      \       /""\     |"      "\   /"     "|  /"      \  
@@ -255,26 +181,22 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
 #  __/  \\     (|  /       \  |___    |.  |       |.  |          //  \ ___   //      /    //  __'  \  (| (___\ ||  // ___)_   //      /  
 # /" \   :)   /|__/ \     ( \_|:  \   /\  |\      \:  |         (:   _(  _| |:  __   \   /   /  \\  \ |:       :) (:      "| |:  __   \  
 #(_______/   (_______)     \_______) (__\_|_)      \__|          \_______)  |__|  \___) (___/    \___)(________/   \_______) |__|  \___) 
-######################## ###  ############################################################################################################################################################################################                                                                                                                                     
-               
+######################## ###  ############################################################################################################################################################################################                                                                                                                                               
 def splitgrader(splits_arr):
-    best_upper= []
-    best_upper_count= 0
-
-    best_balanced= []
-    best_balanced_count= 0
     
-    best_lower = []
-    best_lower_count= 0
-    #purge the terrible splits
+    
+    best_upper= {"split":[],"upper_score":0,"lower_score":0}
+    best_balanced= {"split":[],"balance_score":100}
+    best_lower = {"split":[],"upper_score":0,"lower_score":0}
+
+   
     for split in splits_arr:
+        
         push=0
         pull=0
         lower=0
         
-      
-        
-        for day in split:
+        for day in split: #score the split
             if day == 'full':
                 push+=1
                 pull+=1
@@ -292,36 +214,34 @@ def splitgrader(splits_arr):
         if push==0 or pull ==0 or lower== 0: #anything with no frequency for a muscle is not gonna fly
             continue
                 
-        if push+pull > best_upper_count:
-            best_upper = split
-            best_upper_count = push+pull
-        
-        if push+pull+lower > best_balanced_count:
-            best_balanced = split
-            best_balanced_count = push+pull+lower
-        
-        if lower > best_lower_count:
-            best_lower=split
-            best_lower_count = lower
+        if push+pull > best_upper["upper_score"] or (push+pull == best_upper["upper_score"] and lower > best_upper["lower_score"]): #prioritizes having the highest score for upper, then having lower secondarily
+            best_upper["split"]=split
+            best_upper["upper_score"] =push+pull
+            best_upper["lower_score"]=lower
             
-    print("The best lower split is "+ str(best_lower))
-    
-    print("The best balanced split is "+ str(best_balanced))
-    
-    print("The best upper split is "+ str(best_upper))
+        balance = push-(push+pull+lower/3)
+        if push+pull+lower > best_balanced["score"]:
+            best_balanced["split"]=split
+            
             
         
-        
-
+        if lower > best_upper["lower_score"] or (lower == best_lower["lower_score"] and push+pull > best_lower["lower_score"]):#prioritizes ahving the highest score for lower, then upper secondarily
+            best_lower["split"]=split
+            best_lower["upper_score"] =push+pull
+            best_lower["lower_score"] =lower
+            
+    print("The best lower split is "+ str(best_lower["split"]))
     
-        
+    print("The best balanced split is "+ str(best_balanced["split"]))
     
-
-
-    
-
-    
-
+    print("The best upper split is "+ str(best_upper["split"]))
+###############################################################################################################################################
+#  _____ _   _  _____ ______  _____ _______   __ 
+# |_   _| \ | |/ ____|  ____|/ ____|__   __| /_ |
+#   | | |  \| | |  __| |__  | (___    | |     | |
+#   | | | . ` | | |_ |  __|  \___ \   | |     | |
+#  _| |_| |\  | |__| | |____ ____) |  | |     | |
+# |_____|_| \_|\_____|______|_____/   |_|     |_|
 ############################################################################################################################################################################################
 # Returns an array
        #return[0] = DOTW dictionary
