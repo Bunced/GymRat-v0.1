@@ -101,7 +101,7 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
     new_week=[]
     yesterday= 6 if position-1==-1 else position-1 # we do this to avoid index out of bound from first check
     today=position
-    tomorrow= 0 if position+1==6 else position+1 #we do this so that we do not get index out of bounds error, and the last day of the week refers to the first day of the next week for tomorrow.
+    tomorrow= 0 if position==6 else position+1 #we do this so that we do not get index out of bounds error, and the last day of the week refers to the first day of the next week for tomorrow.
 
 
     #Case where we have completed the amount of days that we are training, cut recursion short
@@ -114,9 +114,57 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
         new_week=week.copy()
         calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far,ppl)
     
-    
+    #from here in out its all true working days
+    elif position==6: # we need to handle differently for the last day of the split as to make sure it doesnt interfere 
+        upper=True
+        lower=True
+        full=True
+        push=ppl
+        pull=ppl
 
-    else: #True from here on out
+        if week[yesterday]=="upper" or week[tomorrow]=="upper":
+            upper=False
+            push=False
+            pull=False
+            full=False
+
+        if week[yesterday]=="lower"or week[tomorrow]=="lower":
+            lower=False
+            full=False
+        
+        if week[yesterday]=="push" or week[tomorrow]=="push":
+            upper=False
+            push=False
+            full=False
+        if week[yesterday] == "pull" or week[tomorrow]=="pull":
+            upper=False
+            pull=False
+            full=False
+        
+        if upper:
+            new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
+            new_week[today]="upper"
+            calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
+
+        if lower:
+            new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
+            new_week[today]="lower"
+            calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
+        if push:
+            new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
+            new_week[today]="push"
+            calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
+        if pull:
+            new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
+            new_week[today]="pull"
+            calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)     
+        if full:
+            new_week=week.copy() #we copy in a new week instead of just using week because week is A REFERENCE TO THE WEEK ARRAY, using copy segments out some new memory for a new week 
+            new_week[today]="full"
+            calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)      
+
+
+    else: #True + during normal week from here on out
         #Not training today or tomorrow = anything
         match week[yesterday]:
             case False|True: #No training yesterday, today could be anything
@@ -197,7 +245,6 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
                 calcsplit(splits_arr,new_week,position+1,days_per_week,days_so_far+1,ppl)
             case "full":
                 print("You fucked up, I found yesterday as 'full' fucking idiot")
-            
             case _:
                 print("Error, default case reached in calcsplit, yesterday was"+str(week[yesterday]))
 #############################################################################################################################################################################################
@@ -213,8 +260,10 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
 def splitgrader(splits_arr):
     best_upper= []
     best_upper_count= 0
+
     best_balanced= []
     best_balanced_count= 0
+    
     best_lower = []
     best_lower_count= 0
     #purge the terrible splits
@@ -249,7 +298,7 @@ def splitgrader(splits_arr):
         
         if push+pull+lower > best_balanced_count:
             best_balanced = split
-            best_balanced = push+pull+lower
+            best_balanced_count = push+pull+lower
         
         if lower > best_lower_count:
             best_lower=split
