@@ -40,7 +40,7 @@ def new_workout():
         days_per_week = availability_ingest[2]
 
         working_days = " ,".join([day for day, value in dotw.items() if value])
-       
+
         
         if input("So you want to work out on "+working_days + " for "+str(mins_per_workout)+ "minutes? [Y/N]").lower() in POSITVE_INDICATORS:
             break
@@ -58,31 +58,14 @@ def new_workout():
             if value == True:
                 dotw[key]='full'
         splits_arr.append([dotw])
-    # All other cases covered by cursed as fuck algorithm 
-    else:
-        #this fucked up recursive algorithm for algorithm design
         
+    # Recursive algorithm creates all sensical splits 
+    else:
        calcsplit(splits_arr,week_arr,0,days_per_week,0,ppl)
     
-    count = 1
-    for split in splits_arr:
-        print("Split "+str(count)+":")
-        if split[0] != False:
-            print("Monday: " + str(split[0]))
-        if split[1] != False:
-            print("Tuesday: " + str(split[1]))
-        if split[2] != False:
-            print("Wednesday: " + str(split[2]))
-        if split[3] != False:
-            print("Thursday: " + str(split[3]))
-        if split[4] != False:
-            print("Friday: " + str(split[4]))
-        if split[5] != False:
-            print("Saturday: " + str(split[5]))
-        if split[6] != False:
-            print("Sunday: " + str(split[6]))
-
-        count+=1
+    
+    print(str(len(splits_arr))+" splits were successfully generated, here are my reccomendations:")
+    
     splitgrader(splits_arr)
 
 
@@ -183,11 +166,15 @@ def calcsplit(splits_arr,week,position,days_per_week,days_so_far,ppl):
 #(_______/   (_______)     \_______) (__\_|_)      \__|          \_______)  |__|  \___) (___/    \___)(________/   \_______) |__|  \___) 
 ######################## ###  ############################################################################################################################################################################################                                                                                                                                               
 def splitgrader(splits_arr):
+    #runner variables are so user can have a look at the next best options if they didnt like the first one
     
-    
-    best_upper= {"split":[],"upper_score":0,"lower_score":0}
-    best_balanced= {"split":[],"balance_score":100}
-    best_lower = {"split":[],"upper_score":0,"lower_score":0}
+    best_upper= {"split":[],"upper_score":0,"upper_freq":0,"lower_score":0,"lower_freq":0}
+    runner_upper= {"split":[],"upper_score":0,"upper_freq":0,"lower_score":0,"lower_freq":0}
+    best_balanced= {"split":[],"balance_score":100,"freq_balance":0}
+    runner_balanced= {"split":[],"balance_score":100,"freq_balance":0}
+    best_lower = {"split":[],"upper_score":0,"lower_score":0,"upper_freq":0,"lower_freq":0}
+    runner_lower = {"split":[],"upper_score":0,"lower_score":0,"upper_freq":0,"lower_freq":0}
+
 
    
     for split in splits_arr:
@@ -195,46 +182,117 @@ def splitgrader(splits_arr):
         push=0
         pull=0
         lower=0
+        upper_freq=0
+        lower_freq=0
         
-        for day in split: #score the split
+        for day in split: #score the split 
             if day == 'full':
                 push+=1
                 pull+=1
                 lower+=2
+                upper_freq+=1
+                lower_freq+=1
             elif day=='upper':
                 push+=2
                 pull+=2
+                upper_freq+=1
             elif day == 'lower':
                 lower+=4
+                lower_freq+=1
             elif day == 'push':
                 push+=4
+                upper_freq+=11
             elif day == 'pull':
                 pull+=4
+                upper_freq+=1
             
-        if push==0 or pull ==0 or lower== 0: #anything with no frequency for a muscle is not gonna fly
-            continue
-                
-        if push+pull > best_upper["upper_score"] or (push+pull == best_upper["upper_score"] and lower > best_upper["lower_score"]): #prioritizes having the highest score for upper, then having lower secondarily
-            best_upper["split"]=split
-            best_upper["upper_score"] =push+pull
-            best_upper["lower_score"]=lower
-            
-        balance = push-(push+pull+lower/3)
-        if push+pull+lower > best_balanced["score"]:
-            best_balanced["split"]=split
-            
-            
+        upper=push+pull
+        total=upper+lower
         
-        if lower > best_upper["lower_score"] or (lower == best_lower["lower_score"] and push+pull > best_lower["lower_score"]):#prioritizes ahving the highest score for lower, then upper secondarily
-            best_lower["split"]=split
-            best_lower["upper_score"] =push+pull
-            best_lower["lower_score"] =lower
+        if push==0 or pull ==0 or lower== 0: #anything with no volume for a muscle is not gonna fly
+            continue
+        if upper>=lower*2 or upper*2<=lower: #too unbalanced
+            continue
+        
+       
+        
+        #we calculate a volume score to be the primary consideration for the splits, upper and lower take absolute volume and balanced takes the difference in volumes
+        if upper > best_upper["upper_score"] or (upper == best_upper["upper_score"] and lower > best_upper["lower_score"]): #prioritizes having the highest score for upper, then having lower secondarily
+            runner_upper=best_upper.copy() 
+            best_upper["split"]=split
+            best_upper["upper_score"] = upper
+            best_upper["lower_score"] = lower
+            best_upper["upper_freq"] = upper_freq 
+            best_upper["lower_freq"] = lower_freq 
             
+        elif upper == best_upper["upper_score"]: #if the volume is the same as the best split so far, we instead compare the frequency, which seems to have some level of effect
+            if upper_freq > best_upper["upper_freq"]:
+                runner_upper=best_upper.copy() 
+                best_upper["split"]=split
+                best_upper["upper_score"] = upper
+                best_upper["lower_score"] = lower
+                best_upper["upper_freq"] = upper_freq 
+                best_upper["lower_freq"] = lower_freq
+            elif upper_freq==best_upper["upper_freq"] and lower_freq>best_upper["lower_freq"]:
+                runner_upper=best_upper.copy() 
+                best_upper["split"]=split
+                best_upper["upper_score"] = upper
+                best_upper["lower_score"] = lower
+                best_upper["upper_freq"] = upper_freq 
+                best_upper["lower_freq"] = lower_freq
+
+        volume_balance = max(push,pull,lower)-min(push,pull,lower)
+        freq_balance= max(upper_freq,lower_freq) - min(upper_freq,lower_freq)
+        
+        if volume_balance< best_balanced["balance_score"]:
+            runner_balanced= best_balanced.copy()
+            best_balanced["split"] = split
+            best_balanced["balance_score"] = volume_balance
+            best_balanced["freq_balance"] = freq_balance
+        #secondarily,optimise for frequency
+        elif volume_balance == best_balanced["balance_score"] and freq_balance < best_balanced["freq_balance"]:
+            runner_balanced= best_balanced.copy()
+            best_balanced["split"] = split
+            best_balanced["balance_score"] = volume_balance
+            best_balanced["freq_balance"] = freq_balance
+        
+            
+        if lower > best_lower["lower_score"] or (lower == best_lower["lower_score"] and push+pull > best_lower["lower_score"]):#prioritizes ahving the highest score for lower, then upper secondarily
+            runner_lower=best_lower.copy() 
+            best_lower["split"] = split
+            best_lower["upper_score"] = upper
+            best_lower["lower_score"] = lower
+            best_lower["upper_freq"] = upper_freq 
+            best_lower["lower_freq"] = lower_freq
+            
+        elif lower ==best_lower["lower_score"]: #if the volume is the same as the best split so far, we instead compare the frequency, which seems to have some level of effect
+            if lower_freq >best_lower["lower_freq"]:
+               runner_lower=best_lower.copy()
+               best_lower["split"]=split
+               best_lower["upper_score"] = upper
+               best_lower["lower_score"] = lower
+               best_lower["upper_freq"] = upper_freq 
+               best_lower["lower_freq"] = lower_freq
+            #if lower frequency already as good as the best, then optimise for upper 
+            elif lower_freq==best_lower["lower_freq"] and upper_freq>best_lower["upper_freq"]:
+               runner_lower=best_lower.copy()
+               best_lower["split"]=split
+               best_lower["upper_score"] = upper
+               best_lower["lower_score"] = lower
+               best_lower["upper_freq"] = upper_freq 
+               best_lower["lower_freq"] = lower_freq
+        
     print("The best lower split is "+ str(best_lower["split"]))
+    print("The 2nd best lower split is "+ str(runner_lower["split"]))
     
     print("The best balanced split is "+ str(best_balanced["split"]))
+    print("The 2nd best balanced split is "+ str(runner_balanced["split"]))
+
     
     print("The best upper split is "+ str(best_upper["split"]))
+    print("The 2nd best upper split is "+ str(runner_upper["split"]))
+    
+    return 
 ###############################################################################################################################################
 #  _____ _   _  _____ ______  _____ _______   __ 
 # |_   _| \ | |/ ____|  ____|/ ____|__   __| /_ |
