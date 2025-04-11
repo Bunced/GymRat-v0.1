@@ -224,6 +224,7 @@ def splitgrader(splits_arr):
             best_upper["lower_score"] = lower
             best_upper["upper_freq"] = upper_freq 
             best_upper["lower_freq"] = lower_freq 
+        #hello
             
         elif upper == best_upper["upper_score"]: #if the volume is the same as the best split so far, we instead compare the frequency, which seems to have some level of effect
             if upper_freq > best_upper["upper_freq"]:
